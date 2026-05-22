@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brain Zap Poll 🧠⚡ | rTMS & tDCS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Space Mono', monospace; background: #0a0a0f; color: #f0f0ff; min-height: 100vh; overflow-x: hidden; }
+  .noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); opacity: 0.4; }
+  .grid-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(100,100,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(100,100,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+  .container { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .badge { display: inline-block; background: #1a1a2e; border: 1px solid #3a3a6e; border-radius: 999px; padding: 6px 16px; font-size: 11px; color: #8888cc; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px, 5vw, 52px); font-weight: 800; line-height: 1.1; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, #a0a0ff 50%, #ff6eb4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .subtitle { color: #6666aa; font-size: 13px; margin-bottom: 8px; }
+  .live-dot { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,255,128,0.1); border: 1px solid rgba(0,255,128,0.3); border-radius: 999px; padding: 4px 12px; font-size: 11px; color: #00ff80; letter-spacing: 1px; }
+  .live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #00ff80; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+  .tabs { display: flex; gap: 4px; background: #111118; border: 1px solid #222233; border-radius: 12px; padding: 4px; margin-bottom: 28px; }
+  .tab { flex: 1; padding: 10px; border: none; background: transparent; color: #6666aa; font-family: 'Space Mono', monospace; font-size: 12px; cursor: pointer; border-radius: 8px; transition: all 0.2s; letter-spacing: 0.5px; }
+  .tab.active { background: #1e1e3a; color: #a0a0ff; border: 1px solid #3a3a6e; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .questions-grid { display: flex; flex-direction: column; gap: 16px; }
+  .q-card { background: #0e0e1a; border: 1px solid #1e1e35; border-radius: 16px; padding: 20px; transition: border-color 0.2s; }
+  .q-card:hover { border-color: #3a3a6e; }
+  .q-number { font-size: 10px; color: #4444aa; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .q-text { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #e0e0ff; margin-bottom: 14px; line-height: 1.4; }
+  .q-emoji { font-size: 20px; margin-right: 6px; }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .opt-btn { padding: 10px 14px; background: #12121f; border: 1px solid #2a2a4a; border-radius: 10px; color: #c0c0e0; font-family: 'Space Mono', monospace; font-size: 11px; cursor: pointer; text-align: left; transition: all 0.15s; line-height: 1.4; }
+  .opt-btn:hover { background: #1a1a2e; border-color: #5a5aaa; color: #fff; }
+  .opt-btn.selected { background: #1e1e3a; border-color: #6060cc; color: #a0a0ff; }
+  .opt-btn.correct { background: rgba(0,200,100,0.1); border-color: #00c864; color: #00ff80; }
+  .opt-btn.wrong { background: rgba(255,60,60,0.08); border-color: #cc4444; color: #ff8888; }
+  .submit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #3030aa, #6030cc); border: none; border-radius: 12px; color: #fff; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 20px; transition: all 0.2s; letter-spacing: 1px; }
+  .submit-btn:hover { transform: translateY(-1px); background: linear-gradient(135deg, #4040bb, #7040dd); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .results-grid { display: flex; flex-direction: column; gap: 20px; }
+  .r-card { background: #0e0e1a; border: 1px solid #1e1e35; border-radius: 16px; padding: 20px; }
+  .r-q-text { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #9090cc; margin-bottom: 14px; }
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 11px; color: #7070aa; margin-bottom: 4px; }
+  .bar-label span:last-child { color: #a0a0ff; }
+  .bar-track { background: #1a1a28; border-radius: 999px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; transition: width 1s cubic-bezier(0.4,0,0.2,1); background: linear-gradient(90deg, #4040cc, #8040dd); }
+  .bar-fill.correct-bar { background: linear-gradient(90deg, #00aa55, #00ff80); }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: #0e0e1a; border: 1px solid #1e1e35; border-radius: 12px; padding: 16px; text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: #a0a0ff; }
+  .stat-label { font-size: 10px; color: #4444aa; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+  .qr-wrapper { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .qr-box { background: #fff; border-radius: 16px; padding: 20px; display: inline-block; }
+  .qr-info { text-align: center; max-width: 380px; }
+  .qr-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #e0e0ff; margin-bottom: 8px; }
+  .qr-subtitle { font-size: 11px; color: #5555aa; line-height: 1.6; margin-bottom: 16px; }
+  .url-box { background: #0e0e1a; border: 1px solid #2a2a4a; border-radius: 10px; padding: 12px 16px; font-size: 11px; color: #6060cc; word-break: break-all; text-align: center; margin-bottom: 16px; }
+  .hosting-tip { background: #0e1a1a; border: 1px solid #1a3a3a; border-radius: 12px; padding: 16px; margin-top: 8px; width: 100%; max-width: 500px; }
+  .hosting-tip h3 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #00ccaa; margin-bottom: 10px; }
+  .host-option { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 11px; color: #5588aa; line-height: 1.6; }
+  .host-badge { background: #0a2a2a; border: 1px solid #1a4a4a; border-radius: 6px; padding: 2px 8px; color: #00ccaa; font-size: 10px; white-space: nowrap; margin-top: 1px; }
+  .confetti-pop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; }
+  .score-reveal { text-align: center; padding: 24px; background: #0e0e1a; border: 1px solid #2a2a5a; border-radius: 20px; margin-bottom: 20px; }
+  .score-big { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #a0a0ff 50%, #ff6eb4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 6px; }
+  .score-msg { font-size: 16px; color: #8888cc; }
+  .refresh-btn { padding: 10px 20px; background: transparent; border: 1px solid #3a3a6e; border-radius: 10px; color: #6666aa; font-family: 'Space Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+  .refresh-btn:hover { border-color: #6666aa; color: #a0a0ff; }
+  @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } .stats-row { grid-template-columns: repeat(3,1fr); } }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="grid-bg"></div>
+<div class="confetti-pop" id="confetti"></div>
+<div class="container">
+  <div class="header">
+    <div class="badge">🧠 MBBS Neuromodulation Session</div>
+    <h1>BRAIN ZAP QUIZ ⚡</h1>
+    <p class="subtitle">rTMS & tDCS — test if your neurons were actually paying attention</p>
+    <span class="live-dot">LIVE POLL</span>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('poll')">📝 Take Poll</button>
+    <button class="tab" onclick="switchTab('results')">📊 Live Results</button>
+    <button class="tab" onclick="switchTab('qr')">📱 Share QR</button>
+  </div>
+  <div class="section active" id="tab-poll">
+    <div id="poll-form">
+      <div class="questions-grid" id="questions-container"></div>
+      <button class="submit-btn" id="submit-btn" onclick="submitPoll()">⚡ SUBMIT ANSWERS — let's see if ur neurons fired</button>
+    </div>
+    <div id="poll-done" style="display:none">
+      <div class="score-reveal">
+        <div class="score-big" id="score-display"></div>
+        <div class="score-msg" id="score-msg"></div>
+        <br>
+        <button class="refresh-btn" onclick="resetPoll()">🔄 try again (skill issue?)</button>
+      </div>
+      <div class="questions-grid" id="answered-container"></div>
+    </div>
+  </div>
+  <div class="section" id="tab-results">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="stat-responses">0</div><div class="stat-label">responses</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-avg">—</div><div class="stat-label">avg score</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-hardest">—</div><div class="stat-label">hardest Q</div></div>
+    </div>
+    <div class="results-grid" id="results-container"></div>
+    <div style="text-align:center;margin-top:16px"><button class="refresh-btn" onclick="renderResults()">🔄 refresh results</button></div>
+  </div>
+  <div class="section" id="tab-qr">
+    <div class="qr-wrapper">
+      <div>
+        <div class="qr-title" style="text-align:center;margin-bottom:12px">Share this poll 📡</div>
+        <div class="qr-box" id="qrcode"></div>
+      </div>
+      <div class="qr-info">
+        <div class="qr-subtitle">Scan to open the poll on your phone. Once hosted, the QR below auto-generates from your live URL.</div>
+        <div class="url-box" id="poll-url">yoursite.com/braingame-poll.html</div>
+      </div>
+      <div class="hosting-tip">
+        <h3>🚀 where to host this (free, no cap)</h3>
+        <div class="host-option"><span class="host-badge">GitHub Pages</span><span>Push to GitHub → Settings → Pages. Free, HTTPS, custom domain optional.</span></div>
+        <div class="host-option"><span class="host-badge">Vercel</span><span>vercel --prod or drag-drop the file. Instant URL. Free tier is very generous.</span></div>
+        <div class="host-option"><span class="host-badge">Render</span><span>Static site hosting, free tier. Connect GitHub or direct upload.</span></div>
+        <div class="host-option"><span class="host-badge">Surge.sh</span><span>npx surge in the folder — 30 second deploy. Free subdomain instantly.</span></div>
+        <div class="host-option"><span class="host-badge">Tiiny.host</span><span>Upload zip, get link instantly. No signup. Perfect for one-time classroom demos.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const QUESTIONS=[{id:'q1',emoji:'🧲',text:'rTMS uses what to stimulate the brain? (no peeking at ur notes bestie)',options:['A tiny electric prod — literally','Rapidly changing magnetic fields','Focused ultrasound waves','Bluetooth... jk but imagine'],correct:1,fun:['That would be a very bad time','Correct! Faraday would be proud','That\'s TUS, not TMS','Ping! No bars in the cortex tho']},{id:'q2',emoji:'⚡',text:'tDCS delivers current between ___ and ___ mA to the scalp. Fill the blank bestie.',options:['0.5 – 1 mA','1 – 2 mA','5 – 10 mA','20 – 50 mA (💀)'],correct:1,fun:['Close but low','Yes! Just enough to tingle, not fry','That would hospitalize you','You\'d be a human Tesla coil lmao']},{id:'q3',emoji:'🟦🟥',text:'In tDCS, which electrode INCREASES cortical excitability? (It\'s giving... positive vibes)',options:['Cathode (–)','Anode (+)','Both equally','Depends on vibes tbh'],correct:1,fun:['Cathode decreases excitability','Anodal tDCS = more excitable neurons!','Nope, they do opposite things','Respectfully, it doesn\'t depend on vibes']},{id:'q4',emoji:'🎯',text:'rTMS is FDA-cleared for which of these indications?',options:['Treatment-resistant depression','Curing exam anxiety (we wish)','Increasing Wi-Fi signal','Making you smarter overnight'],correct:0,fun:['Yes! MDD was the first approved indication','Petition to FDA submitted, awaiting reply','Wrong department, that\'s a router job','If only...']},{id:'q5',emoji:'🔁',text:'The "r" in rTMS stands for:',options:['Radiofrequency','Repetitive','Reversible','Really really strong'],correct:1,fun:['That\'s MRI territory','Repetitive TMS — pulses delivered in trains','Reversible is a property, not the name','Lmaooo but also kinda accurate']},{id:'q6',emoji:'🚫',text:'Absolute contraindication for rTMS:',options:['Having a bad hair day','Metal implants in/near the skull','Being sleep deprived (half this batch rn)','Drinking too much chai before session'],correct:1,fun:['Hair is actually in the way tho tbf','YES — cochlear implants, aneurysm clips = no go','Relatable but not a contraindication','Chai doesn\'t interact with TMS. Yet.']},{id:'q7',emoji:'🧠',text:'tDCS primarily modulates neurons by changing their:',options:['Resting membrane potential','Neurotransmitter gene expression','Blood type (??)','Career aspirations'],correct:0,fun:['Subthreshold modulation of membrane potential','That\'s long-term neuroplasticity, not primary mechanism','Bruh.','The neurons are also confused about that']},{id:'q8',emoji:'🏆',text:'Overall vibe of today\'s session?',options:['It actually slapped 🔥','Meh... it was okay ig','I was lowkey sleeping','My brain needs tDCS rn to process this'],correct:0,fun:['Based answer','Fair, we accept feedback','At least ur honest bestie','We can arrange that actually']}];
+let responses=JSON.parse(localStorage.getItem('braingame_responses')||'[]');
+let userAnswers={};let submitted=false;
+function switchTab(tab){document.querySelectorAll('.tab').forEach((t,i)=>{const tabs=['poll','results','qr'];t.classList.toggle('active',tabs[i]===tab);});document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(tab==='results')renderResults();if(tab==='qr')renderQR();}
+function buildQuestions(containerId,showAnswers){const container=document.getElementById(containerId);container.innerHTML='';QUESTIONS.forEach((q,qi)=>{const card=document.createElement('div');card.className='q-card';card.innerHTML=`<div class="q-number">Q${qi+1} of ${QUESTIONS.length}</div><div class="q-text"><span class="q-emoji">${q.emoji}</span>${q.text}</div><div class="options-grid" id="opts-${qi}">${q.options.map((opt,oi)=>{let cls='opt-btn';if(showAnswers){if(oi===q.correct)cls+=' correct';else if(userAnswers[q.id]===oi)cls+=' wrong';}else{if(userAnswers[q.id]===oi)cls+=' selected';}return`<button class="${cls}" onclick="${showAnswers?'':` selectOpt(${qi},${oi},'${q.id}')`}">${opt}${showAnswers?`<div style="font-size:10px;margin-top:4px;opacity:0.7">${q.fun[oi]}</div>`:''}</button>`;}).join('')}</div>`;container.appendChild(card);});}
+function selectOpt(qi,oi,qid){if(submitted)return;userAnswers[qid]=oi;document.querySelectorAll(`#opts-${qi} .opt-btn`).forEach((b,i)=>{b.classList.toggle('selected',i===oi);});document.getElementById('submit-btn').disabled=Object.keys(userAnswers).length<QUESTIONS.length;}
+function submitPoll(){if(Object.keys(userAnswers).length<QUESTIONS.length)return;submitted=true;let score=0;QUESTIONS.slice(0,7).forEach(q=>{if(userAnswers[q.id]===q.correct)score++;});const responseData={answers:{...userAnswers},score,ts:Date.now()};responses.push(responseData);try{localStorage.setItem('braingame_responses',JSON.stringify(responses));}catch(e){}let msg=score>=6?'🔥 absolute menace at neuromodulation':score>=4?'🧠 not bad — your neurons were kinda paying attention':score>=2?'😬 babe... were you on your phone?':'💀 did you attend the same session?';document.getElementById('score-display').textContent=`${score}/7`;document.getElementById('score-msg').textContent=msg;document.getElementById('poll-form').style.display='none';document.getElementById('poll-done').style.display='block';buildQuestions('answered-container',true);if(score>=5)spawnConfetti();}
+function resetPoll(){userAnswers={};submitted=false;document.getElementById('poll-form').style.display='block';document.getElementById('poll-done').style.display='none';buildQuestions('questions-container',false);document.getElementById('submit-btn').disabled=true;}
+function renderResults(){const container=document.getElementById('results-container');container.innerHTML='';const total=responses.length;document.getElementById('stat-responses').textContent=total;if(total===0){container.innerHTML='<div style="text-align:center;color:#4444aa;padding:40px;font-size:13px">no responses yet — share the poll! 📡</div>';document.getElementById('stat-avg').textContent='—';document.getElementById('stat-hardest').textContent='—';return;}const avg=(responses.reduce((s,r)=>s+r.score,0)/total).toFixed(1);document.getElementById('stat-avg').textContent=avg;const accuracies=QUESTIONS.slice(0,7).map((q,qi)=>({qi:qi+1,pct:total?Math.round(responses.filter(r=>r.answers[q.id]===q.correct).length/total*100):0}));const hardest=accuracies.reduce((a,b)=>a.pct<b.pct?a:b);document.getElementById('stat-hardest').textContent=`Q${hardest.qi}`;QUESTIONS.forEach((q,qi)=>{const card=document.createElement('div');card.className='r-card';const tally=q.options.map((_,oi)=>responses.filter(r=>r.answers[q.id]===oi).length);card.innerHTML=`<div class="r-q-text">${q.emoji} Q${qi+1}: ${q.text}</div>${q.options.map((opt,oi)=>{const count=tally[oi];const pct=total?Math.round(count/total*100):0;const isCorrect=oi===q.correct&&qi<7;return`<div class="bar-row"><div class="bar-label"><span>${opt.substring(0,40)}${opt.length>40?'…':''}${isCorrect?' ✓':''}</span><span>${pct}% (${count})</span></div><div class="bar-track"><div class="bar-fill ${isCorrect?'correct-bar':''}" style="width:${pct}%"></div></div></div>`;}).join('')}`;container.appendChild(card);});}
+function renderQR(){const qrEl=document.getElementById('qrcode');if(qrEl.querySelector('canvas')||qrEl.querySelector('img'))return;const url=window.location.href.split('?')[0];document.getElementById('poll-url').textContent=url;try{new QRCode(qrEl,{text:url,width:200,height:200,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(e){qrEl.innerHTML='<div style="color:#333;font-size:11px;padding:10px;text-align:center">QR renders when hosted online</div>';}}
+function spawnConfetti(){const c=document.getElementById('confetti');const colors=['#a0a0ff','#ff6eb4','#00ff80','#ffd700','#ff6060'];for(let i=0;i<60;i++){const el=document.createElement('div');el.style.cssText=`position:absolute;width:${4+Math.random()*8}px;height:${4+Math.random()*8}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};left:${Math.random()*100}%;top:-20px;opacity:${0.7+Math.random()*0.3};animation:fall ${1.5+Math.random()*2}s ease-in ${Math.random()*0.8}s forwards;`;c.appendChild(el);}const style=document.createElement('style');style.textContent=`@keyframes fall{to{transform:translateY(110vh) rotate(${360+Math.random()*720}deg);opacity:0;}}`;document.head.appendChild(style);setTimeout(()=>{c.innerHTML='';},3500);}
+buildQuestions('questions-container',false);
+document.getElementById('submit-btn').disabled=true;
+</script>
+</body>
+</html>
